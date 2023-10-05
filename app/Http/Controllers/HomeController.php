@@ -28,7 +28,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $_getServices = ScServices::all();
+        $_getServices = ScServices::where('portalID', 1)->orderBy('serviceId', 'desc')->get();
         return view('home')->with(['services' => $_getServices]);
     }
 

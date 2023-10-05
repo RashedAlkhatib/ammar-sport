@@ -18,7 +18,7 @@ class CreateUsersTable extends Migration
             $table->string('name');
             $table->string('sub_type');
             $table->string('sub_valid_till');
-            $table->string('phone_number')->unique();
+            $table->string('msisdn')->unique();
             $table->rememberToken();
             $table->timestamps();
         });

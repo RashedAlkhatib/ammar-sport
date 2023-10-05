@@ -32,7 +32,7 @@
                         ?>
                         <div class="card m-3 p-3">
                             <img class="card-img-top img-fluid" style="max-width: 250px;"
-                                 src="{{ URL::to('/') }}/{{$content['ar_cntnt']}}" alt="Card image cap">
+                                 src="{{$content['ar_cntnt']}}" alt="Card image cap">
                             <div class="card-body">
                                 <hr>
                             </div>

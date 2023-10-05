@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header text-center">صفحة الاشتراك</div>
+                <div class="card-header text-center" style=" font-size: xx-large">صفحة الاشتراك</div>
                 <h3 class="text-center mt-4">:يرجى اختيار فئة الأشتراك
                 </h3>
                 <div class="card-body" dir="rtl">

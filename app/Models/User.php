@@ -17,11 +17,14 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    protected $table = 'sc_subscribers_73';
     protected $fillable = [
         'name',
-        'phone_number',
+        'msisdn',
         'sub_type',
-        'sub_valid_till'
+        'chargingDate',
+        'subDate',
+        'subTime'
     ];
 
     /**

@@ -20,7 +20,7 @@ class CheckStatus
 
 
 
-        if (Auth::check() && strtotime(Auth::User()->sub_valid_till) <= strtotime(date('Y-m-d H:i:s'))) {
+        if (Auth::check() && strtotime(Auth::User()->chargingDate) <= strtotime(date('Y-m-d H:i:s'))) {
 
             Auth::logout();
             return redirect()->to('/login')->with('warning', 'Your session has expired because your status change.');

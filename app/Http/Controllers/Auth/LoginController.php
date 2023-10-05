@@ -48,7 +48,7 @@ class LoginController extends Controller
     {
 
         $request->validate([
-            'phone_number' => 'required',
+            'msisdn' => 'required',
             'otp' => 'required'
         ]);
         $verify = false;
@@ -61,27 +61,27 @@ class LoginController extends Controller
 
         if ($request->isMethod('post') ) {
 
-            if (substr($request->phone_number, 0, 1) == '0'){
+            if (substr($request->msisdn, 0, 1) == '0'){
 
-                $_phoneNumber = "967" . substr($request->phone_number, 1);
+                $_phoneNumber = "967" . substr($request->msisdn, 1);
             }else{
-                $_phoneNumber = $request->phone_number;
+                $_phoneNumber = $request->msisdn;
             }
 
         }
 
         $request->session()->forget('OTP');
-        $_user = User::where('phone_number', $_phoneNumber)->first();
+        $_user = User::where('msisdn', $_phoneNumber)->first();
 
         if (empty($_user)) {
 
 
             $_user = User::create(
                 [
-                    'name' => 'test',
-                    'sub_valid_till' => '0',
+                    'name' => 'المستخدم',
+                    'chargingDate' => '0',
                     'sub_type' => '0',
-                    'phone_number' => $_phoneNumber
+                    'msisdn' => $_phoneNumber
                 ]
             );
         }
@@ -115,19 +115,19 @@ class LoginController extends Controller
 
         if ($request->isMethod('post') ) {
 
-            if (substr($request->phone_number, 0, 1) == '0'){
+            if (substr($request->msisdn, 0, 1) == '0'){
 
-                $_phoneNumber = "967" . substr($request->phone_number, 1);
+                $_phoneNumber = "967" . substr($request->msisdn, 1);
             }else{
-                $_phoneNumber = $request->phone_number;
+                $_phoneNumber = $request->msisdn;
             }
         }
 
-        $_user = User::where('phone_number', $_phoneNumber)->first();
+        $_user = User::where('msisdn', $_phoneNumber)->first();
 
         if (!empty($_user) ) {
 
-            if (strtotime($_user->sub_valid_till) >= strtotime(date('Y-m-d H:i:s'))){
+            if (strtotime($_user->chargingDate) >= strtotime(date('Y-m-d H:i:s'))){
                 Auth::login($_user);
                 return redirect()->route('home');
             }else{
@@ -137,12 +137,13 @@ class LoginController extends Controller
         }
 
         $response =
-            Http::get("http://git-jo.net/youDataSync/SendSMS?msisdn=" . urlencode($_phoneNumber) . "&serid=" . urlencode(env('SENDER_ID')) . "&senderName=" . env('SENDER_NAME') . "&text=" . urlencode("Your Secret Code is:"));
+            Http::get((env('OTP_API'))."?msisdn=" . urlencode($_phoneNumber) . "&serid=" . urlencode(env('SENDER_ID')) . "&senderName=" . env('SENDER_NAME') . "&text=" . urlencode("Your Secret Code is:"));
+
         $_otp = explode('-', $response->body())[0];
         $request->session()->put('OTP', $_otp);
 
 
-        return view('auth.otp')->with(['otp' => $_otp, 'phone_number' => $request->phone_number]);
+        return view('auth.otp')->with(['otp' => $_otp, 'msisdn' => $request->msisdn]);
     }
 
 
@@ -160,24 +161,39 @@ class LoginController extends Controller
             }
 
         }
+//
 
-        $_user = User::where('phone_number', $_phoneNumber)->first();
+        $_user = User::where('msisdn', $_phoneNumber)->first();
 
         if ( $request->header('msisdn') != null) {
 
-            if (!empty($_user) && strtotime($_user->sub_valid_till) >= strtotime(date('Y-m-d H:i:s'))) {
+            if (!empty($_user) && strtotime($_user->chargingDate) >= strtotime(date('Y-m-d H:i:s'))) {
                 Auth::login($_user);
                 return redirect()->route('home');
             } else {
-               return redirect()->route('sendOTP',['phone_number'=>$request->header('msisdn')])->with(['phone_number'=>$request->header('msisdn')]);
+                /*
+               * create user if user not found
+               */
+                if (!empty($_user)){
+                    return redirect()->route('subs',['id'=>$_user->id])->with(['id'=>$request->id]);
+
+                }
+
+                if (empty($_user)){
+                    $_user = User::create(
+                        [
+                            'name' => 'المستخدم',
+                            'chargingDate' => '0',
+                            'sub_type' => '0',
+                            'msisdn' => $_phoneNumber
+                        ]
+                    );
+
+                    return redirect()->route('subs',['id'=>$_user->id])->with(['id'=>$request->id]);
+                }
             }
         }
-//        //die(var_dump(empty($_user)));
-//        if (!empty($_user) && strtotime($_user->sub_valid_till) <= strtotime(date('Y-m-d H:i:s'))) {
-//            return redirect()->route('subs',['id'=>$_user->id])->with(['id'=>$request->id]);
-//        }
-//
-//       // die(var_dump("test"));
+
         return view('auth.login');
     }
 
@@ -203,7 +219,7 @@ class LoginController extends Controller
             $_validTill = date('Y-m-d H:i:s', $TotalTimeStamp);
             $user->fill([
                 'sub_type' => $request->sub_type,
-                'sub_valid_till' => $_validTill
+                'chargingDate' => $_validTill
             ]);
             $_subId = env('SERVICE_D_PRODUCT');
             $_senderId = env('SERVICE_D_ID');
@@ -214,12 +230,14 @@ class LoginController extends Controller
             $_validTill = date('Y-m-d H:i:s', $TotalTimeStamp);
             $user->fill([
                 'sub_type' => $request->sub_type,
-                'sub_valid_till' => $_validTill
+                'chargingDate' => $_validTill,
+                'subDate'=>date('Y-m-d'),
+                'subTime'=>date('H:i:s')
             ]);
             $_subId = env('SERVICE_W_PRODUCT');
             $_senderId = env('SERVICE_W_ID');
         }
-        $apiUrl = env('SUB_API') . '?msisdn=' . urlencode($user->phone_number) . '&serid='.urlencode($_senderId).'&subkey=1&productId=' . urlencode($_subId);
+        $apiUrl = env('SUB_API') . '?msisdn=' . urlencode($user->msisdn) . '&serid='.urlencode($_senderId).'&subkey=1&productId=' . urlencode($_subId);
 
         if ($user->save()){
             $response =
